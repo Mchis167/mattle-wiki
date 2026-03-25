@@ -5,35 +5,73 @@
    Màu extract trực tiếp từ Figma Design
    ============================================ */
 
-@theme inline {
-  /* --- Backgrounds --- */
-  --color-wiki-bg:          #0d0b06;       /* page background, tối nhất */
-  --color-wiki-surface:     #1d1b16;       /* card / item box background */
-  --color-wiki-deep:        #282001;       /* energy bar, text-shadow bg */
+:root {
+  /* --- Colors (Raw CSS Variables) --- */
+  --wiki-bg: #0d0b06;
+  --wiki-surface: #1d1b16;
+  --wiki-deep: #282001;
+  --wiki-ink: #171510;
 
-  /* --- Borders / Pixel-art edges --- */
-  --color-wiki-border:      #2f2717;       /* card border chính */
-  --color-wiki-border-item: #3b382f;       /* item box border (trong detail) */
-  --color-wiki-border-nav:  #493b0c;       /* nav bottom border */
+  --wiki-border: #2f2717;
+  --wiki-border-item: #3b382f;
+  --wiki-border-nav: #211a03;
 
-  /* --- Accent / Gold --- */
-  --color-wiki-gold:        #f1c315;       /* button vàng chính (Play Now) */
-  --color-wiki-gold-dark:   #6b5409;       /* button shadow / border vàng tối */
+  --wiki-gold: #f1c315;
+  --wiki-gold-hover: #f0d469;
+  --wiki-gold-dark: #6b5409;
+  --wiki-gold-secondary: #8b700c;
 
-  /* --- Text --- */
-  --color-wiki-text:        #f0e9cf;       /* primary text (cream white) */
-  --color-wiki-text-label:  rgba(240, 233, 207, 0.72);  /* label / stat names */
-  --color-wiki-text-muted:  rgba(240, 233, 207, 0.48);  /* muted / description */
-  --color-wiki-text-shadow: #282001;       /* text shadow color */
+  --wiki-book: #28251e;
+  --wiki-tab-bg: #3b382f;
+  --wiki-tab-hover: #4a463b;
 
-  /* --- Surfaces / Overlays --- */
-  --color-wiki-overlay:     rgba(240, 233, 207, 0.05);  /* section bg overlay nhẹ */
-  --color-wiki-divider:     rgba(240, 233, 207, 0.08);  /* divider / border nhẹ */
+  --wiki-text: #f0e9cf;
+  --wiki-text-label: rgba(240, 233, 207, 0.72);
+  --wiki-text-muted: rgba(240, 233, 207, 0.48);
+  --wiki-text-dimmed: rgba(240, 233, 207, 0.32);
+  --wiki-text-shadow: #282001;
 
-  /* --- Status --- */
-  --color-wiki-green:       #22c55e;       /* badge "Active", trạng thái mở */
+  --wiki-overlay: rgba(240, 233, 207, 0.05);
+  --wiki-divider: rgba(240, 233, 207, 0.08);
 
-  /* --- Font (set sau khi có font file) --- */
+  --wiki-green: #22c55e;
+
+  /* --- Book Layout Gradients --- */
+  --wiki-book-bg: linear-gradient(to right, #28251e 0%, #221f18 50%, #28251e 100%);
+  --wiki-page-spread: linear-gradient(to right, #1d1b16 0%, #1f1c17 20%, #1f1c17 46%, #171511 50%, #1f1c17 54%, #1f1c17 80%, #1d1b16 100%);
+  --wiki-page-divider: linear-gradient(to bottom, #16130d 0%, rgba(23, 21, 16, 0.02) 49.5%, #16130d 100%);
+}
+
+@theme {
+  --color-wiki-bg: var(--wiki-bg);
+  --color-wiki-surface: var(--wiki-surface);
+  --color-wiki-deep: var(--wiki-deep);
+  --color-wiki-ink: var(--wiki-ink);
+
+  --color-wiki-border: var(--wiki-border);
+  --color-wiki-border-item: var(--wiki-border-item);
+  --color-wiki-border-nav: var(--wiki-border-nav);
+
+  --color-wiki-gold: var(--wiki-gold);
+  --color-wiki-gold-hover: var(--wiki-gold-hover);
+  --color-wiki-gold-dark: var(--wiki-gold-dark);
+  --color-wiki-gold-secondary: var(--wiki-gold-secondary);
+
+  --color-wiki-book: var(--wiki-book);
+  --color-wiki-tab-bg: var(--wiki-tab-bg);
+  --color-wiki-tab-hover: var(--wiki-tab-hover);
+
+  --color-wiki-text: var(--wiki-text);
+  --color-wiki-text-label: var(--wiki-text-label);
+  --color-wiki-text-muted: var(--wiki-text-muted);
+  --color-wiki-text-dimmed: var(--wiki-text-dimmed);
+  --color-wiki-text-shadow: var(--wiki-text-shadow);
+
+  --color-wiki-overlay: var(--wiki-overlay);
+  --color-wiki-divider: var(--wiki-divider);
+
+  --color-wiki-green: var(--wiki-green);
+
   --font-pixel: var(--font-pixel-local), monospace;
 }
 

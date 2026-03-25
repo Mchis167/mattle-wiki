@@ -4,5 +4,5 @@ export const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
   apiVersion: "2025-03-25",
-  useCdn: true, // false nếu muốn luôn lấy data mới nhất (dev mode)
+  useCdn: process.env.NODE_ENV === "production",
 });

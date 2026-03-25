@@ -1,0 +1,5 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 25 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="selectedIndicatorContainer">
+<path id="selectedIndicator" d="M25 6H13V4H16V2H18V0H20V2H22V4H25V6Z" fill="var(--fill-0, #1D1B16)"/>
+</g>
+</svg>

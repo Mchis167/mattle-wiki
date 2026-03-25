@@ -1,36 +1,18 @@
 import type { Metadata } from "next";
-import { Press_Start_2P } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-/**
- * FONT SETUP
- *
- * Hiện tại dùng "Press Start 2P" (Google Fonts) để dev trước.
- *
- * Khi có custom font file (.woff2):
- * 1. Đặt file vào /public/fonts/PixelFont-Regular.woff2
- * 2. Thay block này bằng localFont (xem comment bên dưới)
- */
-const pixelFont = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
+const pixelFont = localFont({
+  src: [
+    {
+      path: "../../public/fonts/MS-Sans-Serif-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-pixel-local",
   display: "swap",
 });
-
-/**
- * CUSTOM FONT (dùng khi đã có file font):
- *
- * import localFont from "next/font/local";
- * const pixelFont = localFont({
- *   src: [
- *     { path: "../../public/fonts/PixelFont-Regular.woff2", weight: "400" },
- *     { path: "../../public/fonts/PixelFont-Bold.woff2",    weight: "700" },
- *   ],
- *   variable: "--font-pixel-local",
- *   display: "swap",
- * });
- */
 
 export const metadata: Metadata = {
   title: "$MATTLE WIKI",
