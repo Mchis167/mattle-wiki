@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "tokens:push": "node scripts/push-tokens-to-figma.mjs",
+    "tokens:export": "node scripts/export-tokens-studio.mjs",
+    "figma:connect": "figma connect publish --token $FIGMA_TOKEN"
   },
   "dependencies": {
     "@sanity/image-url": "^2.0.3",
@@ -16,9 +19,11 @@
     "next-sanity": "^12.1.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sanity-plugin-media": "^4.1.1",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@figma/code-connect": "^1.4.2",
     "@sanity/types": "^5.18.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

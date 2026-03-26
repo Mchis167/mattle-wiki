@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { TabsBar } from "./TabItem";
 import { BreadcrumbContainer, type BreadcrumbItem } from "./Breadcrumb";
+import OutlineText from "../ui/OutlineText";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens — WikiTitle badge palette
@@ -87,29 +88,19 @@ function WikiTitleBadge({ isMobile = false }: { isMobile?: boolean }) {
           paddingBottom: pb,
         }}
       >
-        <span
-          className="font-pixel leading-none"
+        <OutlineText
+          as="span"
+          size={2}
+          color="#211a03"
+          shadowY={4}
+          shadowColor="#282001"
+          className="font-pixel leading-none text-wiki-text"
           style={{
             fontSize: size,
-            color: "var(--wiki-text)",
-            // 8-direction text-shadow (2px) to simulate "outside stroke"
-            textShadow: `
-              2px 0 0 var(--wiki-border-nav), 
-              -2px 0 0 var(--wiki-border-nav), 
-              0 2px 0 var(--wiki-border-nav), 
-              0 -2px 0 var(--wiki-border-nav), 
-              2px 2px 0 var(--wiki-border-nav), 
-              -2px -2px 0 var(--wiki-border-nav), 
-              2px -2px 0 var(--wiki-border-nav), 
-              -2px 2px 0 var(--wiki-border-nav),
-              0px 4px 0 var(--wiki-deep),
-              -2px 4px 0 var(--wiki-deep),
-              2px 4px 0 var(--wiki-deep)
-            `,
           }}
         >
           $MATTLE WIKI
-        </span>
+        </OutlineText>
       </div>
       <TitleEdge mirrored />
     </Link>

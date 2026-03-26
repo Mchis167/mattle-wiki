@@ -20,7 +20,7 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
         Padding 4 bên = 20px (p-5)
         Max width matching Figma 1296px.
       */}
-      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-10 mb-5 min-h-[800px]">
+      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-8 mb-5 min-h-[880px]">
 
         {/* 
           MainContentBackground (Absolute Layer)
@@ -77,8 +77,8 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
               <div className="w-[3px] shrink-0 relative z-10 pointer-events-none" style={{ background: "var(--wiki-page-divider)" }} />
               <div className="flex-1 relative z-10 pointer-events-none" />
 
-              {/* Content Overlay - px-12 (48px) padding inside CardGrid */}
-              <div className="absolute inset-0 z-20 flex flex-col overflow-auto scrollbar-hide px-12 py-8">
+              {/* Content Overlay - no padding here to allow children to define exact Figma padding */}
+              <div className="absolute inset-0 z-20 flex flex-col overflow-visible">
                 {children}
               </div>
             </div>
