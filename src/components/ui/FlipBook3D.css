@@ -71,13 +71,13 @@
   will-change: opacity;
 }
 
-/* Front-face shadow: darkens the right edge as the page starts to lift */
-.fb3d-shadow-overlay--front {
+/* Left-side shadow: spine is on the right, so gradient is dark at right, clear at left */
+.fb3d-shadow-overlay--left {
   background: linear-gradient(to left, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
 }
 
-/* Back-face shadow: darkens the left edge as the back face swings into view */
-.fb3d-shadow-overlay--back {
+/* Right-side shadow: spine is on the left, so gradient is dark at left, clear at right */
+.fb3d-shadow-overlay--right {
   background: linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
 }
 

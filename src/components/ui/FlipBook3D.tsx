@@ -85,9 +85,9 @@ function ShadowOverlay({
   direction,
 }: {
   shadowValue: MotionValue<number>;
-  direction: "front" | "back";
+  direction: "left" | "right";
 }) {
-  const opacity = useTransform(shadowValue, [0, 1], [0, 0.6]);
+  const opacity = useTransform(shadowValue, [0, 1], [0, 0.65]);
   return (
     <motion.div
       aria-hidden="true"
@@ -194,7 +194,10 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {frontContent}
         </div>
-        <ShadowOverlay shadowValue={stripFrontShadow} direction="front" />
+        <ShadowOverlay 
+          shadowValue={stripFrontShadow} 
+          direction={flipPhase === "flipping-next" ? "right" : "left"} 
+        />
       </div>
 
       {/* Back face */}
@@ -212,7 +215,10 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {backContent}
         </div>
-        <ShadowOverlay shadowValue={stripBackShadow} direction="back" />
+        <ShadowOverlay 
+          shadowValue={stripBackShadow} 
+          direction={flipPhase === "flipping-next" ? "left" : "right"} 
+        />
       </div>
     </motion.div>
   );
@@ -276,6 +282,20 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
         right: stageRightOverride !== null ? stageRightOverride : baseRight,
       };
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
+
+    // ── Shading Logic ───────────────────────────────────────────────────────
+    // These shadows are cast onto the stage pages underneath the flipping leaf
+    const stageLeftShadow = useTransform(masterRotateY, (v) => {
+      if (v < -90) return (Math.abs(v) - 90) / 90; // flipNext landing
+      if (v > 0 && v <= 90) return 1 - (v / 90);   // flipPrev lifting
+      return 0;
+    });
+
+    const stageRightShadow = useTransform(masterRotateY, (v) => {
+      if (v < 0 && v >= -90) return 1 - (Math.abs(v) / 90); // flipNext lifting
+      if (v > 90) return (v - 90) / 90;                     // flipPrev landing
+      return 0;
+    });
 
     // ── flipNext ─────────────────────────────────────────────────────────────
     const flipNext = useCallback(async () => {
@@ -411,8 +431,14 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
             During flipPrev: stage LEFT  overridden to prevSpread left
         ──────────────────────────────────────────────────────────────────── */}
         <div className="fb3d-stage" aria-hidden="true">
-          <div className="fb3d-stage__left">{getPage(stageLine.left)}</div>
-          <div className="fb3d-stage__right">{getPage(stageLine.right)}</div>
+          <div className="fb3d-stage__left">
+            {getPage(stageLine.left)}
+            {phase !== "idle" && <ShadowOverlay shadowValue={stageLeftShadow} direction="left" />}
+          </div>
+          <div className="fb3d-stage__right">
+            {getPage(stageLine.right)}
+            {phase !== "idle" && <ShadowOverlay shadowValue={stageRightShadow} direction="right" />}
+          </div>
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────
