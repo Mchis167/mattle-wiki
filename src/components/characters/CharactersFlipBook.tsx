@@ -77,7 +77,7 @@ function CharactersFlipBookInner({ characters }: { characters: Character[] }) {
       <FlipBook3D
         ref={flipBookRef}
         pages={pageNodes}
-        flipDuration={1200}
+        flipDuration={900}
         canFlipNext={!isLast}
         canFlipPrev={!isFirst}
         showBuiltInNav={false}

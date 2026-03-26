@@ -111,6 +111,8 @@ interface SegmentStripProps {
   frontContent: ReactNode;
   backContent: ReactNode;
   flipPhase: "flipping-next" | "flipping-prev";
+  frontShadowVal: MotionValue<number>;
+  backShadowVal: MotionValue<number>;
 }
 
 function SegmentStrip({
@@ -122,15 +124,14 @@ function SegmentStrip({
   frontContent,
   backContent,
   flipPhase,
+  frontShadowVal,
+  backShadowVal,
 }: SegmentStripProps) {
   const topPct = (segmentIndex / totalSegments) * 100;
   const delayMs = segmentIndex * SEGMENT_STAGGER_MS;
   const effectiveDurationMs = durationSec * 1000;
 
   const localRotateY = useMotionValue(0);
-  const stripFrontShadow = useMotionValue(0);
-  const stripBackShadow = useMotionValue(0);
-
   useEffect(() => {
     const totalRange = 180;
     const off = masterRotateY.on("change", (masterVal) => {
@@ -144,21 +145,6 @@ function SegmentStrip({
     return () => off();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masterRotateY, targetRotate, delayMs, effectiveDurationMs]);
-
-  useEffect(() => {
-    const off = localRotateY.on("change", (v) => {
-      const abs = Math.abs(v);
-      if (abs <= 90) {
-        stripFrontShadow.set(abs / 90);
-        stripBackShadow.set(0);
-      } else {
-        stripFrontShadow.set(0);
-        stripBackShadow.set(1 - (abs - 90) / 90);
-      }
-    });
-    return () => off();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localRotateY]);
 
   const transformOrigin =
     flipPhase === "flipping-next" ? "left center" : "right center";
@@ -195,7 +181,7 @@ function SegmentStrip({
           {frontContent}
         </div>
         <ShadowOverlay 
-          shadowValue={stripFrontShadow} 
+          shadowValue={frontShadowVal} 
           direction={flipPhase === "flipping-next" ? "right" : "left"} 
         />
       </div>
@@ -216,7 +202,7 @@ function SegmentStrip({
           {backContent}
         </div>
         <ShadowOverlay 
-          shadowValue={stripBackShadow} 
+          shadowValue={backShadowVal} 
           direction={flipPhase === "flipping-next" ? "left" : "right"} 
         />
       </div>
@@ -284,6 +270,19 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
 
     // ── Shading Logic ───────────────────────────────────────────────────────
+    // These shadows are unified for the whole flipping leaf
+    const frontShadow = useTransform(masterRotateY, (v) => {
+      const abs = Math.abs(v);
+      if (abs <= 90) return abs / 90;
+      return 0;
+    });
+
+    const backShadow = useTransform(masterRotateY, (v) => {
+      const abs = Math.abs(v);
+      if (abs > 90) return 1 - (abs - 90) / 90;
+      return 0;
+    });
+
     // These shadows are cast onto the stage pages underneath the flipping leaf
     const stageLeftShadow = useTransform(masterRotateY, (v) => {
       if (v < -90) return (Math.abs(v) - 90) / 90; // flipNext landing
@@ -469,6 +468,8 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
                 frontContent={flippingPage.front}
                 backContent={flippingPage.back}
                 flipPhase={phase}
+                frontShadowVal={frontShadow}
+                backShadowVal={backShadow}
               />
             ))}
           </div>
