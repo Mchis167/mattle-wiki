@@ -182,7 +182,7 @@ function SegmentStrip({
         </div>
         <ShadowOverlay 
           shadowValue={frontShadowVal} 
-          direction={flipPhase === "flipping-next" ? "right" : "left"} 
+          direction={flipPhase === "flipping-next" ? "left" : "right"} 
         />
       </div>
 
@@ -203,7 +203,7 @@ function SegmentStrip({
         </div>
         <ShadowOverlay 
           shadowValue={backShadowVal} 
-          direction={flipPhase === "flipping-next" ? "left" : "right"} 
+          direction={flipPhase === "flipping-next" ? "right" : "left"} 
         />
       </div>
     </motion.div>
