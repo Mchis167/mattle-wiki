@@ -74,7 +74,7 @@ type FlipPhase = "idle" | "flipping-next" | "flipping-prev";
 
 const FLIP_EASE = [0.645, 0.045, 0.355, 1.0] as const;
 const SEGMENTS = 3;
-const SEGMENT_STAGGER_MS = 35;
+const SEGMENT_STAGGER_MS = 20;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShadowOverlay
