@@ -73,8 +73,10 @@ type FlipPhase = "idle" | "flipping-next" | "flipping-prev";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FLIP_EASE = [0.645, 0.045, 0.355, 1.0] as const;
-const SEGMENTS = 3;
-const SEGMENT_STAGGER_MS = 35;
+const ROWS = 3;
+const COLS = 3;
+const ROW_STAGGER_MS = 20;
+const COL_STAGGER_MS = 0; // Tweak this to bend horizontally as well!
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShadowOverlay
@@ -101,9 +103,11 @@ function ShadowOverlay({
 // SegmentStrip — one horizontal band of the flipping leaf
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface SegmentStripProps {
-  segmentIndex: number;
-  totalSegments: number;
+interface SegmentBlockProps {
+  rowIndex: number;
+  colIndex: number;
+  totalRows: number;
+  totalCols: number;
   masterRotateY: MotionValue<number>;
   durationSec: number;
   /** -180 for flipNext, +180 for flipPrev */
@@ -115,9 +119,11 @@ interface SegmentStripProps {
   backShadowVal: MotionValue<number>;
 }
 
-function SegmentStrip({
-  segmentIndex,
-  totalSegments,
+function SegmentBlock({
+  rowIndex,
+  colIndex,
+  totalRows,
+  totalCols,
   masterRotateY,
   durationSec,
   targetRotate,
@@ -126,9 +132,11 @@ function SegmentStrip({
   flipPhase,
   frontShadowVal,
   backShadowVal,
-}: SegmentStripProps) {
-  const topPct = (segmentIndex / totalSegments) * 100;
-  const delayMs = segmentIndex * SEGMENT_STAGGER_MS;
+}: SegmentBlockProps) {
+  // Distance from spine for horizontal staggering
+  const colDist = flipPhase === "flipping-next" ? colIndex : totalCols - 1 - colIndex;
+  
+  const delayMs = rowIndex * ROW_STAGGER_MS + colDist * COL_STAGGER_MS;
   const effectiveDurationMs = durationSec * 1000;
 
   const localRotateY = useMotionValue(0);
@@ -150,10 +158,12 @@ function SegmentStrip({
     flipPhase === "flipping-next" ? "left center" : "right center";
 
   // Calculate clip path insets: clipPath: inset(top right bottom left)
-  // Distance from top is topPct
-  // Distance from bottom is 100% - bottomPct
-  const bottomPct = ((segmentIndex + 1) / totalSegments) * 100;
-  const clipPathBase = `inset(${topPct}% 0 ${100 - bottomPct}% 0)`;
+  const topPct = (rowIndex / totalRows) * 100;
+  const bottomPct = ((rowIndex + 1) / totalRows) * 100;
+  const leftPct = (colIndex / totalCols) * 100;
+  const rightPct = ((colIndex + 1) / totalCols) * 100;
+
+  const clipPathBase = `inset(${topPct}% ${100 - rightPct}% ${100 - bottomPct}% ${leftPct}%)`;
 
   // IMPORTANT v4: No overflow hidden on any 3D layer.
   return (
@@ -180,9 +190,9 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {frontContent}
         </div>
-        <ShadowOverlay 
-          shadowValue={frontShadowVal} 
-          direction={flipPhase === "flipping-next" ? "right" : "left"} 
+        <ShadowOverlay
+          shadowValue={frontShadowVal}
+          direction={flipPhase === "flipping-next" ? "right" : "left"}
         />
       </div>
 
@@ -201,9 +211,9 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {backContent}
         </div>
-        <ShadowOverlay 
-          shadowValue={backShadowVal} 
-          direction={flipPhase === "flipping-next" ? "left" : "right"} 
+        <ShadowOverlay
+          shadowValue={backShadowVal}
+          direction={flipPhase === "flipping-next" ? "left" : "right"}
         />
       </div>
     </motion.div>
@@ -261,10 +271,10 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
 
     // ── What the stage actually shows ────────────────────────────────────────
     const stageLine = useMemo(() => {
-      const baseLeft  = committedSpreadIndex * 2;
+      const baseLeft = committedSpreadIndex * 2;
       const baseRight = committedSpreadIndex * 2 + 1;
       return {
-        left:  stageLeftOverride  !== null ? stageLeftOverride  : baseLeft,
+        left: stageLeftOverride !== null ? stageLeftOverride : baseLeft,
         right: stageRightOverride !== null ? stageRightOverride : baseRight,
       };
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
@@ -307,13 +317,13 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       // The leaf that lifts: current RIGHT page
       const frontIdx = N * 2 + 1;
       // Revealed on back face: next LEFT page
-      const backIdx  = nextSpread * 2;
+      const backIdx = nextSpread * 2;
       // Stage override: next RIGHT page peeks from behind the lifting leaf
       const stageRightIdx = nextSpread * 2 + 1;
 
       setFlippingPage({
         front: getPage(frontIdx),
-        back:  getPage(backIdx),
+        back: getPage(backIdx),
         phase: "flipping-next",
       });
       setStageRightOverride(stageRightIdx);
@@ -355,13 +365,13 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       // The leaf that sweeps back: current LEFT page
       const frontIdx = N * 2;
       // Revealed on back face: prev RIGHT page
-      const backIdx  = prevSpread * 2 + 1;
+      const backIdx = prevSpread * 2 + 1;
       // Stage override: prev LEFT page peeks from behind the sweeping leaf
       const stageLeftIdx = prevSpread * 2;
 
       setFlippingPage({
         front: getPage(frontIdx),
-        back:  getPage(backIdx),
+        back: getPage(backIdx),
         phase: "flipping-prev",
       });
       setStageLeftOverride(stageLeftIdx);
@@ -396,7 +406,7 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
     useEffect(() => {
       const handler = (e: KeyboardEvent) => {
         if (e.key === "ArrowRight") flipNext();
-        if (e.key === "ArrowLeft")  flipPrev();
+        if (e.key === "ArrowLeft") flipPrev();
       };
       window.addEventListener("keydown", handler);
       return () => window.removeEventListener("keydown", handler);
@@ -452,26 +462,32 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
               position: "absolute",
               top: 0,
               bottom: 0,
-              left:  phase === "flipping-next" ? "50%" : "0%",
-              right: phase === "flipping-next" ? "0%"  : "50%",
+              left: phase === "flipping-next" ? "50%" : "0%",
+              right: phase === "flipping-next" ? "0%" : "50%",
               zIndex: 20,
             }}
           >
-            {Array.from({ length: SEGMENTS }).map((_, i) => (
-              <SegmentStrip
-                key={i}
-                segmentIndex={i}
-                totalSegments={SEGMENTS}
-                masterRotateY={masterRotateY}
-                durationSec={flipDuration / 1000}
-                targetRotate={phase === "flipping-next" ? -180 : 180}
-                frontContent={flippingPage.front}
-                backContent={flippingPage.back}
-                flipPhase={phase}
-                frontShadowVal={frontShadow}
-                backShadowVal={backShadow}
-              />
-            ))}
+            {Array.from({ length: ROWS * COLS }).map((_, i) => {
+              const r = Math.floor(i / COLS);
+              const c = i % COLS;
+              return (
+                <SegmentBlock
+                  key={i}
+                  rowIndex={r}
+                  colIndex={c}
+                  totalRows={ROWS}
+                  totalCols={COLS}
+                  masterRotateY={masterRotateY}
+                  durationSec={flipDuration / 1000}
+                  targetRotate={phase === "flipping-next" ? -180 : 180}
+                  frontContent={flippingPage.front}
+                  backContent={flippingPage.back}
+                  flipPhase={phase}
+                  frontShadowVal={frontShadow}
+                  backShadowVal={backShadow}
+                />
+              );
+            })}
           </div>
         )}
 
