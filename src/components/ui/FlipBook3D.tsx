@@ -269,30 +269,57 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       };
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
 
-    // ── Shading Logic ───────────────────────────────────────────────────────
-    // These shadows are unified for the whole flipping leaf
+    // ── Shading Logic (V10 — Physically Accurate) ──────────────────────────
+    //
+    // masterRotateY semantics:
+    //   flipNext: goes  0 → -180  (right page lifts toward left)
+    //   flipPrev: goes  0 → +180  (left  page lifts toward right)
+    //
+    // Four shadow layers:
+    //   1. frontShadow  — darkens the FRONT face of the lifting leaf (page 2)
+    //   2. backShadow   — darkens the BACK  face of the lifting leaf (page 3)
+    //   3. stageRightShadow — cast shadow onto page 4 (flipNext) / page 2 (flipPrev)
+    //   4. stageLeftShadow  — cast shadow onto page 1 (flipPrev) / page 3 (flipNext)
+
+    // 1. Front face: 0°→90° linear dark (page turns away from light)
     const frontShadow = useTransform(masterRotateY, (v) => {
       const abs = Math.abs(v);
-      if (abs <= 90) return abs / 90;
-      return 0;
+      return abs <= 90 ? abs / 90 : 0;
     });
 
+    // 2. Back face: darkest at 90°, lightens as it lands (90°→180°)
     const backShadow = useTransform(masterRotateY, (v) => {
       const abs = Math.abs(v);
-      if (abs > 90) return 1 - (abs - 90) / 90;
-      return 0;
+      return abs > 90 ? 1 - (abs - 90) / 90 : 0;
     });
 
-    // These shadows are cast onto the stage pages underneath the flipping leaf
-    const stageLeftShadow = useTransform(masterRotateY, (v) => {
-      if (v < -90) return (Math.abs(v) - 90) / 90; // flipNext landing
-      if (v > 0 && v <= 90) return 1 - (v / 90);   // flipPrev lifting
-      return 0;
-    });
-
+    // 3. Stage RIGHT shadow:
+    //    flipNext: cast shadow while leaf is in the air  → sin arc (0→-180)
+    //    flipPrev: leaf lands on right side              → linear (90→180)
     const stageRightShadow = useTransform(masterRotateY, (v) => {
-      if (v < 0 && v >= -90) return 1 - (Math.abs(v) / 90); // flipNext lifting
-      if (v > 90) return (v - 90) / 90;                     // flipPrev landing
+      if (v < 0 && v >= -180) {
+        // sin arc — peaks at -90°, zero at 0° and -180°
+        return Math.sin((Math.abs(v) / 180) * Math.PI) * 0.55;
+      }
+      if (v > 90 && v <= 180) {
+        // flipPrev landing on right
+        return ((v - 90) / 90) * 0.4;
+      }
+      return 0;
+    });
+
+    // 4. Stage LEFT shadow:
+    //    flipPrev: cast shadow while leaf is in the air  → sin arc (0→+180)
+    //    flipNext: leaf lands on left side               → linear (90→180)
+    const stageLeftShadow = useTransform(masterRotateY, (v) => {
+      if (v > 0 && v <= 180) {
+        // sin arc — peaks at +90°, zero at 0° and +180°
+        return Math.sin((v / 180) * Math.PI) * 0.55;
+      }
+      if (v < -90 && v >= -180) {
+        // flipNext landing on left
+        return ((Math.abs(v) - 90) / 90) * 0.4;
+      }
       return 0;
     });
 
