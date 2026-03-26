@@ -6,11 +6,17 @@ import PageControlButton from "./PageControlButton";
 interface SpreadPaginationProps {
   currentPage: number;
   totalPages: number;
+  /** Optional: override default URL navigation with a direct callback */
+  onPrev?: () => void;
+  /** Optional: override default URL navigation with a direct callback */
+  onNext?: () => void;
 }
 
 export default function SpreadPagination({
   currentPage,
   totalPages,
+  onPrev,
+  onNext,
 }: SpreadPaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +27,7 @@ export default function SpreadPagination({
     router.push(`?${params.toString()}`);
   };
 
-  const SIDE_OFFSET = -64; // Tránh magic numbers, dễ dàng điều chỉnh tại đây
+  const SIDE_OFFSET = -64;
 
   return (
     <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-between">
@@ -32,7 +38,7 @@ export default function SpreadPagination({
         <PageControlButton
           direction="left"
           disabled={currentPage <= 1}
-          onClick={() => handlePageChange(currentPage - 1)}
+          onClick={() => (onPrev ? onPrev() : handlePageChange(currentPage - 1))}
           className="opacity-80 hover:opacity-100"
         />
       </div>
@@ -43,7 +49,7 @@ export default function SpreadPagination({
         <PageControlButton
           direction="right"
           disabled={currentPage >= totalPages}
-          onClick={() => handlePageChange(currentPage + 1)}
+          onClick={() => (onNext ? onNext() : handlePageChange(currentPage + 1))}
           className="opacity-80 hover:opacity-100"
         />
       </div>

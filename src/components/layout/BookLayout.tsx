@@ -20,7 +20,7 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
         Padding 4 bên = 20px (p-5)
         Max width matching Figma 1296px.
       */}
-      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-8 mb-5 min-h-[880px]">
+      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-4 mb-5 min-h-[80px]">
 
         {/* 
           MainContentBackground (Absolute Layer)

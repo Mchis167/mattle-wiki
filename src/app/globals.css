@@ -75,9 +75,25 @@
   --font-pixel: var(--font-pixel-local), monospace;
 }
 
+/* Prevent layout shift when browser scrollbar appears / disappears (e.g. during flip animation) */
+html {
+  overflow: hidden;
+}
+
 /* Base styles */
 body {
   background-color: var(--color-wiki-bg);
   color: var(--color-wiki-text);
   font-family: var(--font-pixel);
+  overflow: hidden;
+}
+
+/* Ẩn scrollbar toàn bộ app — Chrome/Safari/Edge */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
 }

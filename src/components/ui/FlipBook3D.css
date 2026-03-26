@@ -1,0 +1,122 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * FlipBook3D.css — Base 3D styles for the realistic page flip component.
+ *
+ * Design notes:
+ *  - All 3D depth lives here; animation values are driven by Framer Motion.
+ *  - backface-visibility MUST be on both .page-face elements for clean flips.
+ *  - transform-origin is set to "left center" so rotation pivots at the spine.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Container ─────────────────────────────────────────────────────────────── */
+
+.fb3d-book-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* Establishes the 3D viewing frustum for all children */
+  perspective: 1500px;
+  perspective-origin: center center;
+}
+
+/* ── Page stack (the "next page" that sits beneath the flipping page) ───────── */
+
+.fb3d-next-page-slot {
+  position: absolute;
+  inset: 0;
+  /* Render below the active PageWrapper */
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* ── Page Wrapper (the element that actually rotates) ──────────────────────── */
+
+.fb3d-page-wrapper {
+  position: absolute;
+  inset: 0;
+  /* Propagate 3D transforms to children (the two faces) */
+  transform-style: preserve-3d;
+  /* Rotate around the LEFT edge — the spine of the book */
+  transform-origin: left center;
+  /* Active page always on top of the next-page-slot */
+  z-index: 20;
+  /* Hint to the compositor to promote this as its own layer during animation */
+  will-change: transform;
+}
+
+/* ── Page Faces ─────────────────────────────────────────────────────────────── */
+
+.fb3d-page-face {
+  position: absolute;
+  inset: 0;
+  /* Each face hides itself when it faces away from the camera */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* The BACK face is pre-rotated 180° so it faces forward when PageWrapper
+   reaches -180° of rotateY */
+.fb3d-page-face--back {
+  transform: rotateY(180deg);
+}
+
+/* ── Shadow Overlay ─────────────────────────────────────────────────────────── */
+
+.fb3d-shadow-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  /* Opacity driven by Framer Motion useTransform */
+  will-change: opacity;
+}
+
+/* Front-face shadow: darkens the right edge as the page starts to lift */
+.fb3d-shadow-overlay--front {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+}
+
+/* Back-face shadow: darkens the left edge as the back face swings into view */
+.fb3d-shadow-overlay--back {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+}
+
+/* ── Stage (left/right half split) ─────────────────────────────────────────── */
+
+.fb3d-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.fb3d-stage__left,
+.fb3d-stage__right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Spine Overlay ──────────────────────────────────────────────────────────── */
+
+.fb3d-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  pointer-events: none;
+  /* Above animation layers but below nav buttons */
+  z-index: 30;
+  background: var(--wiki-page-divider, #171510);
+}
+
+/* ── Utility ─────────────────────────────────────────────────────────────────── */
+
+/* Only apply will-change while animating to avoid GPU memory leak */
+.fb3d-page-wrapper--animating {
+  will-change: transform;
+}
+.fb3d-page-wrapper--idle {
+  will-change: auto;
+}
