@@ -73,8 +73,8 @@ type FlipPhase = "idle" | "flipping-next" | "flipping-prev";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FLIP_EASE = [0.645, 0.045, 0.355, 1.0] as const;
-const SEGMENTS = 4;
-const SEGMENT_STAGGER_MS = 35;
+const SEGMENTS = 10;
+const SEGMENT_STAGGER_MS = 25;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShadowOverlay
@@ -87,7 +87,7 @@ function ShadowOverlay({
   shadowValue: MotionValue<number>;
   direction: "front" | "back";
 }) {
-  const opacity = useTransform(shadowValue, [0, 1], [0, 1]);
+  const opacity = useTransform(shadowValue, [0, 1], [0, 0.5]);
   return (
     <motion.div
       aria-hidden="true"
@@ -174,10 +174,16 @@ function SegmentStrip({
     <motion.div
       style={{
         position: "absolute",
-        inset: 0, // Fill the half-container (wrapper)
+        top: `${topPct}%`,
+        left: 0,
+        right: 0,
+        // height overlap 1px to hide gaps
+        height: `calc(${100 / totalSegments}% + 1px)`,
         transformStyle: "preserve-3d",
         transformOrigin,
         rotateY: localRotateY,
+        // tiny translateZ to avoid z-fighting during overlap
+        z: 0.01 * segmentIndex,
       }}
     >
       {/* Front face */}
@@ -187,11 +193,19 @@ function SegmentStrip({
           inset: 0,
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
-          clipPath: clipPathBase,
-          WebkitClipPath: clipPathBase, // Safari support
+          clipPath: "inset(0)", // Act as local overflow:hidden without flattening 3D
+          WebkitClipPath: "inset(0)",
         }}
       >
-        <div style={{ position: "absolute", inset: 0 }}>
+        <div 
+          style={{ 
+            position: "absolute", 
+            top: `-${topPct}%`, 
+            left: 0, 
+            right: 0,
+            height: `${totalSegments * 100}%` 
+          }}
+        >
           {frontContent}
         </div>
         <ShadowOverlay shadowValue={stripFrontShadow} direction="front" />
@@ -204,12 +218,20 @@ function SegmentStrip({
           inset: 0,
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
-          transform: "rotateY(180deg)", // 180deg offset works perfectly for both -180 and +180 rotations
-          clipPath: clipPathBase,
-          WebkitClipPath: clipPathBase,
+          transform: "rotateY(180deg)", 
+          clipPath: "inset(0)",
+          WebkitClipPath: "inset(0)",
         }}
       >
-        <div style={{ position: "absolute", inset: 0 }}>
+        <div 
+          style={{ 
+            position: "absolute", 
+            top: `-${topPct}%`, 
+            left: 0, 
+            right: 0,
+            height: `${totalSegments * 100}%` 
+          }}
+        >
           {backContent}
         </div>
         <ShadowOverlay shadowValue={stripBackShadow} direction="back" />
