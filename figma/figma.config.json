@@ -1,0 +1,10 @@
+{
+  "codeConnect": {
+    "parser": "react",
+    "include": ["figma/code-connect/**/*.figma.tsx", "src/**/*.tsx"],
+    "figmaFileUrl": "https://www.figma.com/design/87Sgue3XLlaj2b6qw2oLUR/Wiki",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

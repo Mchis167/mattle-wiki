@@ -1,0 +1,120 @@
+{
+  "global": {
+    "Color": {
+      "bg": {
+        "value": "#0d0b06",
+        "type": "color"
+      },
+      "surface": {
+        "value": "#1d1b16",
+        "type": "color"
+      },
+      "deep": {
+        "value": "#282001",
+        "type": "color"
+      },
+      "ink": {
+        "value": "#171510",
+        "type": "color"
+      },
+      "border": {
+        "value": "#2f2717",
+        "type": "color"
+      },
+      "border-item": {
+        "value": "#3b382f",
+        "type": "color"
+      },
+      "border-nav": {
+        "value": "#211a03",
+        "type": "color"
+      },
+      "gold": {
+        "value": "#f1c315",
+        "type": "color"
+      },
+      "gold-hover": {
+        "value": "#f0d469",
+        "type": "color"
+      },
+      "gold-dark": {
+        "value": "#6b5409",
+        "type": "color"
+      },
+      "gold-secondary": {
+        "value": "#8b700c",
+        "type": "color"
+      },
+      "book": {
+        "value": "#28251e",
+        "type": "color"
+      },
+      "tab-bg": {
+        "value": "#3b382f",
+        "type": "color"
+      },
+      "tab-hover": {
+        "value": "#4a463b",
+        "type": "color"
+      },
+      "text": {
+        "value": "#f0e9cf",
+        "type": "color"
+      },
+      "text-label": {
+        "value": "rgba(240, 233, 207, 0.72)",
+        "type": "color"
+      },
+      "text-muted": {
+        "value": "rgba(240, 233, 207, 0.48)",
+        "type": "color"
+      },
+      "text-dimmed": {
+        "value": "rgba(240, 233, 207, 0.32)",
+        "type": "color"
+      },
+      "text-shadow": {
+        "value": "#282001",
+        "type": "color"
+      },
+      "overlay": {
+        "value": "rgba(240, 233, 207, 0.05)",
+        "type": "color"
+      },
+      "divider": {
+        "value": "rgba(240, 233, 207, 0.08)",
+        "type": "color"
+      },
+      "green": {
+        "value": "#22c55e",
+        "type": "color"
+      }
+    },
+    "Gradient": {
+      "book-bg": {
+        "value": "linear-gradient(to right, #28251e 0%, #221f18 50%, #28251e 100%)",
+        "type": "other",
+        "description": "Book layout background gradient"
+      },
+      "page-spread": {
+        "value": "linear-gradient(to right, #1d1b16 0%, #1f1c17 20%, #1f1c17 46%, #171511 50%, #1f1c17 54%, #1f1c17 80%, #1d1b16 100%)",
+        "type": "other",
+        "description": "Page spread gradient"
+      },
+      "page-divider": {
+        "value": "linear-gradient(to bottom, #16130d 0%, rgba(23, 21, 16, 0.02) 49.5%, #16130d 100%)",
+        "type": "other",
+        "description": "Page divider gradient"
+      }
+    },
+    "Typography": {
+      "font-pixel": {
+        "value": {
+          "fontFamily": "MS Sans Serif",
+          "fontWeight": "Bold"
+        },
+        "type": "typography"
+      }
+    }
+  }
+}
