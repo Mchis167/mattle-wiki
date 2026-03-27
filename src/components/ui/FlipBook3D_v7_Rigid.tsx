@@ -46,6 +46,7 @@ export interface FlipBook3DProps {
   canFlipPrev?: boolean;
   canFlipNext?: boolean;
   showBuiltInNav?: boolean;
+  initialSpreadIndex?: number;
   className?: string;
 }
 
@@ -66,7 +67,9 @@ function ShadowOverlay({
   direction,
 }: {
   shadowValue: MotionValue<number>;
-  direction: "front" | "back";
+  // "left" = dark at LEFT edge (spine side for flipNext front/back face)
+  // "right" = dark at RIGHT edge (spine side for flipPrev front/back face)
+  direction: "left" | "right";
 }) {
   const opacity = useTransform(shadowValue, [0, 1], [0, 0.6]);
   return (
@@ -76,6 +79,24 @@ function ShadowOverlay({
       className={`fb3d-shadow-overlay fb3d-shadow-overlay--${direction}`}
     />
   );
+}
+
+// Bóng đổ từ leaf xuống stage phía dưới
+function CastShadowOverlay({
+  shadowValue,
+  direction,
+}: {
+  shadowValue: MotionValue<number>
+  direction: 'left' | 'right'
+}) {
+  const opacity = useTransform(shadowValue, [0, 1], [0, 0.45])
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ opacity }}
+      className={`fb3d-cast-shadow fb3d-cast-shadow--${direction}`}
+    />
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,6 +113,7 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       canFlipPrev = false,
       canFlipNext = false,
       showBuiltInNav = false,
+      initialSpreadIndex = 0,
       className = "",
     },
     ref
@@ -100,7 +122,21 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
     useEffect(() => setMounted(true), []);
 
     const [phase, setPhase] = useState<FlipPhase>("idle");
-    const [committedSpreadIndex, setCommittedSpreadIndex] = useState(0);
+    const [committedSpreadIndex, setCommittedSpreadIndex] = useState(initialSpreadIndex || 0);
+
+    // Sync state if initialSpreadIndex changes from outside (e.g. URL navigation).
+    // GUARD: never sync while animation is in progress — doing so mid-flip
+    // corrupts stageLine (the static stage pages jump to wrong content).
+    useEffect(() => {
+      if (
+        initialSpreadIndex !== undefined &&
+        initialSpreadIndex !== committedSpreadIndex &&
+        !isAnimating.current
+      ) {
+        setCommittedSpreadIndex(initialSpreadIndex);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialSpreadIndex]);
 
     const [stageLeftOverride, setStageLeftOverride] = useState<number | null>(null);
     const [stageRightOverride, setStageRightOverride] = useState<number | null>(null);
@@ -124,26 +160,41 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
 
     // ── Stage Logic ─────────────────────────────────────────────────────────
     const stageLine = useMemo(() => {
-      const baseLeft  = committedSpreadIndex * 2;
+      const baseLeft = committedSpreadIndex * 2;
       const baseRight = committedSpreadIndex * 2 + 1;
       return {
-        left:  stageLeftOverride  !== null ? stageLeftOverride  : baseLeft,
+        left: stageLeftOverride !== null ? stageLeftOverride : baseLeft,
         right: stageRightOverride !== null ? stageRightOverride : baseRight,
       };
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
 
     // ── Shading Logic ───────────────────────────────────────────────────────
+    // Front: bắt đầu tối từ 45° (không phải 0°), đạt max tối tại 90°
     const frontShadow = useTransform(masterRotateY, (v) => {
-      const abs = Math.abs(v);
-      if (abs <= 90) return abs / 90;
-      return 0;
-    });
+      const abs = Math.abs(v)
+      if (abs >= 90 || abs <= 45) return 0
+      const t = (abs - 45) / 45          // 0→1 trong range 45°→90°
+      return 1 - Math.cos(t * Math.PI / 2) // Lambert ease-in
+    })
 
+    // Back: sáng từ 90° → hoàn tất tại 120° (không chờ đến 180°)
     const backShadow = useTransform(masterRotateY, (v) => {
-      const abs = Math.abs(v);
-      if (abs > 90) return 1 - (abs - 90) / 90;
-      return 0;
-    });
+      const abs = Math.abs(v)
+      if (abs < 90) return 0
+      const t = Math.min((abs - 90) / 30, 1)  // 0→1 trong range 90°→120°
+      return Math.cos(t * Math.PI / 2)         // Lambert ease-out, 1→0
+    })
+
+    // Cast Shadow: đổ xuống stage bên dưới leaf
+    // Peak tại 55°, về 0 trước khi leaf land (tắt ở 90°)
+    const castShadow = useTransform(masterRotateY, (v) => {
+      const abs = Math.abs(v)
+      if (abs >= 90) return 0
+      // Bell curve: sin(abs/90 * π) → peak = 1.0 tại abs = 45°
+      // Nhân thêm bias để peak lệch về 55° thay vì 45°
+      const t = abs / 90                          // 0→1
+      return Math.sin(t * Math.PI) * 0.9          // max opacity ~0.9 (nhân với maxOpacity sau)
+    })
 
     // ── flipNext ─────────────────────────────────────────────────────────────
     const flipNext = useCallback(async () => {
@@ -154,12 +205,12 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       const nextSpread = N + 1;
 
       const frontIdx = N * 2 + 1;
-      const backIdx  = nextSpread * 2;
+      const backIdx = nextSpread * 2;
       const stageRightIdx = nextSpread * 2 + 1;
 
       setFlippingPage({
         front: getPage(frontIdx),
-        back:  getPage(backIdx),
+        back: getPage(backIdx),
         phase: "flipping-next",
       });
       setStageRightOverride(stageRightIdx);
@@ -196,12 +247,12 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       const prevSpread = N - 1;
 
       const frontIdx = N * 2;
-      const backIdx  = prevSpread * 2 + 1;
+      const backIdx = prevSpread * 2 + 1;
       const stageLeftIdx = prevSpread * 2;
 
       setFlippingPage({
         front: getPage(frontIdx),
-        back:  getPage(backIdx),
+        back: getPage(backIdx),
         phase: "flipping-prev",
       });
       setStageLeftOverride(stageLeftIdx);
@@ -232,7 +283,7 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
     useEffect(() => {
       const handler = (e: KeyboardEvent) => {
         if (e.key === "ArrowRight") flipNext();
-        if (e.key === "ArrowLeft")  flipPrev();
+        if (e.key === "ArrowLeft") flipPrev();
       };
       window.addEventListener("keydown", handler);
       return () => window.removeEventListener("keydown", handler);
@@ -258,8 +309,28 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
         aria-label="Flip Book"
       >
         <div className="fb3d-stage" aria-hidden="true">
-          <div className="fb3d-stage__left">{getPage(stageLine.left)}</div>
-          <div className="fb3d-stage__right">{getPage(stageLine.right)}</div>
+          <div className="fb3d-stage__left" style={{ position: 'relative' }}>
+            {getPage(stageLine.left)}
+            {/*
+              flipNext: leaf lifts from RIGHT → casts shadow onto LEFT stage.
+              LEFT stage spine is at its RIGHT edge → shadow dark at RIGHT edge
+              → gradient "to left" (dark starts from right) → fb3d-cast-shadow--left
+            */}
+            {phase === 'flipping-next' && (
+              <CastShadowOverlay shadowValue={castShadow} direction="left" />
+            )}
+          </div>
+          <div className="fb3d-stage__right" style={{ position: 'relative' }}>
+            {getPage(stageLine.right)}
+            {/*
+              flipPrev: leaf lifts from LEFT → casts shadow onto RIGHT stage.
+              RIGHT stage spine is at its LEFT edge → shadow dark at LEFT edge
+              → gradient "to right" (dark starts from left) → fb3d-cast-shadow--right
+            */}
+            {phase === 'flipping-prev' && (
+              <CastShadowOverlay shadowValue={castShadow} direction="right" />
+            )}
+          </div>
         </div>
 
         {/* 
@@ -273,8 +344,8 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
               position: "absolute",
               top: 0,
               bottom: 0,
-              left:  phase === "flipping-next" ? "50%" : "0%",
-              right: phase === "flipping-next" ? "0%"  : "50%",
+              left: phase === "flipping-next" ? "50%" : "0%",
+              right: phase === "flipping-next" ? "0%" : "50%",
               zIndex: 20,
               transformStyle: "preserve-3d",
               transformOrigin: phase === "flipping-next" ? "left center" : "right center",
@@ -292,7 +363,16 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
               }}
             >
               {flippingPage.front}
-              <ShadowOverlay shadowValue={frontShadow} direction="front" />
+              {/*
+                flipNext front face: right page lifts, pivot at LEFT spine
+                  → fold/crease at LEFT → dark at LEFT → "left"
+                flipPrev front face: left page lifts, pivot at RIGHT spine
+                  → fold/crease at RIGHT → dark at RIGHT → "right"
+              */}
+              <ShadowOverlay
+                shadowValue={frontShadow}
+                direction={flippingPage.phase === "flipping-next" ? "left" : "right"}
+              />
             </div>
 
             {/* Back face */}
@@ -307,7 +387,17 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
               }}
             >
               {flippingPage.back}
-              <ShadowOverlay shadowValue={backShadow} direction="back" />
+              {/*
+                Back face container has rotateY(180deg) → CSS coords mirrored:
+                  CSS "left" inside = visual "right" to the viewer.
+                flipNext back face (new left page): spine at visual RIGHT → CSS LEFT → "left"
+                flipPrev back face (prev right page): spine at visual LEFT → CSS RIGHT → "right"
+                ∴ same direction mapping as front face — mirror effect cancels out.
+              */}
+              <ShadowOverlay
+                shadowValue={backShadow}
+                direction={flippingPage.phase === "flipping-next" ? "left" : "right"}
+              />
             </div>
           </motion.div>
         )}

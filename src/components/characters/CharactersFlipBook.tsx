@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import FlipBook3D, { FlipBook3DHandle } from "@/components/ui/FlipBook3D";
+import FlipBook3D, { FlipBook3DHandle } from "@/components/ui/FlipBook3D_v8_Bend"
 import SpreadPagination from "@/components/ui/SpreadPagination";
 import CharacterPage from "./CharacterPage";
 import { Character } from "@/types/character";
@@ -49,18 +49,18 @@ function CharactersFlipBookInner({ characters }: { characters: Character[] }) {
   // Imperative ref — lets us call flipNext/flipPrev inside FlipBook3D
   const flipBookRef = useRef<FlipBook3DHandle>(null);
 
-  // SpreadPagination callbacks → trigger animation in FlipBook3D, then sync state
+  // SpreadPagination callbacks → trigger animation only.
+  // setSpreadIndex is called in onFlipNext/onFlipPrev (after animation completes)
+  // so the v7 sync-useEffect never fires mid-animation and disrupts the stage.
   const handlePrev = () => {
-    if (isFirst) return;
-    flipBookRef.current?.flipPrev();
-    setSpreadIndex((s) => Math.max(s - 1, 0));
-  };
+    if (isFirst) return
+    flipBookRef.current?.flipPrev()
+  }
 
   const handleNext = () => {
-    if (isLast) return;
-    flipBookRef.current?.flipNext();
-    setSpreadIndex((s) => Math.min(s + 1, totalSpreads - 1));
-  };
+    if (isLast) return
+    flipBookRef.current?.flipNext()
+  }
 
   const pageNodes = useMemo(
     () =>
@@ -80,7 +80,10 @@ function CharactersFlipBookInner({ characters }: { characters: Character[] }) {
         flipDuration={900}
         canFlipNext={!isLast}
         canFlipPrev={!isFirst}
+        initialSpreadIndex={spreadIndex}
         showBuiltInNav={false}
+        onFlipNext={() => setSpreadIndex(s => Math.min(s + 1, totalSpreads - 1))}
+        onFlipPrev={() => setSpreadIndex(s => Math.max(s - 1, 0))}
       />
 
       {totalSpreads > 1 && (
