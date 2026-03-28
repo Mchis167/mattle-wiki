@@ -12,7 +12,22 @@ import { PixelEdge9, PixelEdge27 } from "./PixelEdge";
  */
 export default function BookLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-wiki-bg overflow-x-hidden">
+    <div className="min-h-screen flex flex-col relative">
+      {/* 
+        Main Page Background Layer
+        -z-10 ensures it's behind all content.
+        Kết hợp Gradient và Hình nền (Ảnh nằm trên gradient)
+      */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-10"
+        style={{
+          background: `
+            url('/assets/Image/MainBackground.png') bottom center / 100% auto no-repeat,
+            linear-gradient(180deg, var(--color-background-gradient-default-1, #100D08) 75%, var(--color-yellow-yl08, #282001) 100%)
+          `,
+        }}
+      />
+
       <NavigationBar />
 
       {/* 
@@ -20,8 +35,7 @@ export default function BookLayout({ children }: { children: React.ReactNode }) 
         Padding 4 bên = 20px (p-5)
         Max width matching Figma 1296px.
       */}
-      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-1 mb-8 min-h-[80px]">
-
+      <div className="relative isolate w-full max-w-[1296px] mx-auto flex-1 flex flex-col p-5 mt-1 mb-8 min-h-[880px]">
         {/* 
           MainContentBackground (Absolute Layer)
           z-index = 1 (using z-10 for safety)

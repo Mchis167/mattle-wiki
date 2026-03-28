@@ -180,6 +180,32 @@ function CastShadowOverlay({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SpineShadow — dynamic "fake border" shadow for the spine area
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SpineShadow({
+  rotateY,
+  direction,
+}: {
+  rotateY: MotionValue<number>;
+  direction: "left" | "right";
+}) {
+  const opacity = useTransform(rotateY, (v) => {
+    const a = Math.abs(v);
+    if (a < 3) return a / 3;
+    if (a > 177) return (180 - a) / 3;
+    return 1;
+  });
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ opacity }}
+      className={`fb3d-spine-shadow fb3d-spine-shadow--${direction}`}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SegmentStrip — one horizontal slice of the curling leaf
 //
 // Each strip independently tracks masterRotateY with a time-delay offset.
@@ -635,7 +661,14 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
         {/* ─────────────────────────────────────────────────────────────────────
             LAYER 3 (z-30) — Spine overlay
         ───────────────────────────────────────────────────────────────────── */}
-        <div className="fb3d-spine" aria-hidden="true" />
+        <div className="fb3d-spine" aria-hidden="true">
+          {phase === "flipping-next" && (
+            <SpineShadow rotateY={masterRotateY} direction="right" />
+          )}
+          {phase === "flipping-prev" && (
+            <SpineShadow rotateY={masterRotateY} direction="left" />
+          )}
+        </div>
 
         {/* ─────────────────────────────────────────────────────────────────────
             Built-in nav (off by default — use CharactersFlipBook / SpreadPagination)

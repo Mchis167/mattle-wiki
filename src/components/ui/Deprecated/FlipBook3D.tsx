@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FlipBook3D.tsx — v3
+ * FlipBook3D.tsx — v5
  *
  * Core fix (v3):
  *   Stage layer now uses stageOverride during animation.
@@ -83,16 +83,40 @@ const SEGMENT_STAGGER_MS = 20;
 function ShadowOverlay({
   shadowValue,
   direction,
+  maxOpacity = 0.65,
 }: {
   shadowValue: MotionValue<number>;
   direction: "left" | "right";
+  maxOpacity?: number;
 }) {
-  const opacity = useTransform(shadowValue, [0, 1], [0, 0.65]);
+  const opacity = useTransform(shadowValue, [0, 1], [0, maxOpacity]);
   return (
     <motion.div
       aria-hidden="true"
       style={{ opacity }}
       className={`fb3d-shadow-overlay fb3d-shadow-overlay--${direction}`}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FoldCreaseShadow — StPageFlip-style inner shadow at the fold/crease edge
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FoldCreaseShadow({
+  shadowValue,
+  flipPhase,
+}: {
+  shadowValue: MotionValue<number>;
+  flipPhase: "flipping-next" | "flipping-prev";
+}) {
+  const opacity = useTransform(shadowValue, [0, 1], [0, 1]);
+  const side = flipPhase === "flipping-next" ? "left" : "right";
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ opacity }}
+      className={`fb3d-fold-crease fb3d-fold-crease--${side}`}
     />
   );
 }
@@ -113,6 +137,8 @@ interface SegmentStripProps {
   flipPhase: "flipping-next" | "flipping-prev";
   frontShadowVal: MotionValue<number>;
   backShadowVal: MotionValue<number>;
+  /** Separate value for fold-crease — starts from 0° unlike delayed frontShadowVal */
+  foldCreaseShadowVal: MotionValue<number>;
 }
 
 function SegmentStrip({
@@ -126,6 +152,7 @@ function SegmentStrip({
   flipPhase,
   frontShadowVal,
   backShadowVal,
+  foldCreaseShadowVal,
 }: SegmentStripProps) {
   const topPct = (segmentIndex / totalSegments) * 100;
   const delayMs = segmentIndex * SEGMENT_STAGGER_MS;
@@ -180,10 +207,14 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {frontContent}
         </div>
-        <ShadowOverlay 
-          shadowValue={frontShadowVal} 
-          direction={flipPhase === "flipping-next" ? "left" : "right"} 
+        {/* General face darkening — delayed to start at 45° (Act 2) */}
+        <ShadowOverlay
+          shadowValue={frontShadowVal}
+          direction={flipPhase === "flipping-next" ? "left" : "right"}
+          maxOpacity={0.5}
         />
+        {/* Fold crease — immediate from 0° so the crease appears as the page lifts */}
+        <FoldCreaseShadow shadowValue={foldCreaseShadowVal} flipPhase={flipPhase} />
       </div>
 
       {/* Back face */}
@@ -193,7 +224,7 @@ function SegmentStrip({
           inset: 0,
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
-          transform: "rotateY(180deg)", // 180deg offset works perfectly for both -180 and +180 rotations
+          transform: "rotateY(180deg)",
           clipPath: clipPathBase,
           WebkitClipPath: clipPathBase,
         }}
@@ -201,10 +232,19 @@ function SegmentStrip({
         <div style={{ position: "absolute", inset: 0 }}>
           {backContent}
         </div>
-        <ShadowOverlay 
-          shadowValue={backShadowVal} 
-          direction={flipPhase === "flipping-next" ? "right" : "left"} 
+        {/*
+          direction: container has rotateY(180deg) so CSS axes are mirrored.
+          CSS "left" inside = visual "right".  Spine is always at visual-right for
+          flipNext back face, visual-left for flipPrev back face — same mapping as
+          front face once the mirror is accounted for.
+        */}
+        <ShadowOverlay
+          shadowValue={backShadowVal}
+          direction={flipPhase === "flipping-next" ? "left" : "right"}
+          maxOpacity={0.5}
         />
+        {/* Fold crease also visible on back face; same direction logic applies */}
+        <FoldCreaseShadow shadowValue={backShadowVal} flipPhase={flipPhase} />
       </div>
     </motion.div>
   );
@@ -269,56 +309,84 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
       };
     }, [committedSpreadIndex, stageLeftOverride, stageRightOverride]);
 
-    // ── Shading Logic (V10 — Physically Accurate) ──────────────────────────
+    // ── Shading Logic (V14 — staggered 3-act sequence) ─────────────────────
     //
-    // masterRotateY semantics:
-    //   flipNext: goes  0 → -180  (right page lifts toward left)
-    //   flipPrev: goes  0 → +180  (left  page lifts toward right)
+    // KEY FIX: previous version had page4-brightening and front-face-darkening
+    // happening SIMULTANEOUSLY (0°→90°), making darkening the dominant percept.
     //
-    // Four shadow layers:
-    //   1. frontShadow  — darkens the FRONT face of the lifting leaf (page 2)
-    //   2. backShadow   — darkens the BACK  face of the lifting leaf (page 3)
-    //   3. stageRightShadow — cast shadow onto page 4 (flipNext) / page 2 (flipPrev)
-    //   4. stageLeftShadow  — cast shadow onto page 1 (flipPrev) / page 3 (flipNext)
+    // Correct sequence — 3 acts:
+    //   ACT 1 (0°→45°)  : Stage page (page4) brightens.     dark→bright.  "trang mở ra"
+    //   ACT 2 (45°→90°) : Leaf front face (page2) darkens.  bright→dark.  "trang ẩn đi"
+    //   ACT 3 (90°→120°): Leaf back face (page3) brightens. dark→bright.  "trang mở ra"
+    //   ACT 4 (120°→180°): Landing — spine shadow builds.
+    //
+    // TWO front-face shadow values:
+    //   foldCreaseShadow : Lambert 0°→90°  — fold crease appears as soon as leaf lifts
+    //   frontShadow      : Lambert 45°→90° — general darkening delayed to Act 2
+    //
+    // GRADIENT DIRECTION RULES:
+    //   Stage LEFT  panel (spine at RIGHT) → "right"
+    //   Stage RIGHT panel (spine at LEFT)  → "left"
+    //   Leaf FRONT/BACK face → same "left"/"right" per flipPhase
+    //   (back face's rotateY(180deg) container mirrors CSS coords, so the same
+    //    direction string produces the correct visual result on both faces)
 
-    // 1. Front face: 0°→90° linear dark (page turns away from light)
+    // A. Fold crease: Lambert, immediate from 0°.  Crease appears as soon as leaf lifts.
+    const foldCreaseShadow = useTransform(masterRotateY, (v) => {
+      const abs = Math.abs(v);
+      if (abs >= 90) return 0;
+      return 1 - Math.cos((abs * Math.PI) / 180); // 0 at 0°, 1 at 90°
+    });
+
+    // B. Front face general darkening: Lambert, DELAYED — only starts at 45° (Act 2).
+    //    0°→45° = 0 (page stays fully bright while stage page brightens in Act 1)
+    //    45°→90° = 0 → 1 (Lambert shape over the compressed range)
     const frontShadow = useTransform(masterRotateY, (v) => {
       const abs = Math.abs(v);
-      return abs <= 90 ? abs / 90 : 0;
+      if (abs >= 90 || abs <= 45) return 0;
+      const t = (abs - 45) / 45;                      // 0→1 over [45°, 90°]
+      return 1 - Math.cos(t * (Math.PI / 2));          // Lambert ease-in
     });
 
-    // 2. Back face: darkest at 90°, lightens as it lands (90°→180°)
+    // C. Back face: cos ease-out 90°→120°. Completes 60° before landing (Act 3 done early).
     const backShadow = useTransform(masterRotateY, (v) => {
       const abs = Math.abs(v);
-      return abs > 90 ? 1 - (abs - 90) / 90 : 0;
+      if (abs <= 90) return 0;
+      const t = Math.min(abs - 90, 30) / 30;           // 0→1 over [90°, 120°]
+      return Math.cos(t * (Math.PI / 2));               // 1 at 90°, 0 at 120°
     });
 
-    // 3. Stage RIGHT shadow:
-    //    flipNext: cast shadow while leaf is in the air  → sin arc (0→-180)
-    //    flipPrev: leaf lands on right side              → linear (90→180)
+    // D. Stage RIGHT shadow (direction="left", dark near spine):
+    //    flipNext cast    v ∈ (0°,−45°]: cos ease-out → completes at 45° (Act 1 done).
+    //    v ∈ (−45°,−90°]: shadow = 0 (page4 already fully bright, Act 2 in progress).
+    //    flipPrev landing v ∈ (90°,180°]: sin ease-in spine shadow.
+    //    v<0 strict → no flash on stage LEFT at flipPrev start.
     const stageRightShadow = useTransform(masterRotateY, (v) => {
-      if (v < 0 && v >= -180) {
-        // sin arc — peaks at -90°, zero at 0° and -180°
-        return Math.sin((Math.abs(v) / 180) * Math.PI) * 0.55;
+      if (v < 0 && v >= -90) {
+        // Complete brightening by 45°, zero after
+        const t = Math.min(Math.abs(v), 45) / 45;
+        return Math.cos(t * (Math.PI / 2)) * 0.65;
       }
       if (v > 90 && v <= 180) {
-        // flipPrev landing on right
-        return ((v - 90) / 90) * 0.4;
+        // Landing: spine shadow builds as flipPrev leaf settles on right
+        return Math.sin(((v - 90) / 90) * (Math.PI / 2)) * 0.45;
       }
       return 0;
     });
 
-    // 4. Stage LEFT shadow:
-    //    flipPrev: cast shadow while leaf is in the air  → sin arc (0→+180)
-    //    flipNext: leaf lands on left side               → linear (90→180)
+    // E. Stage LEFT shadow (direction="right", dark near spine):
+    //    flipPrev cast    v ∈ (0°,+45°]: cos ease-out → completes at 45° (Act 1 done).
+    //    v ∈ (+45°,+90°]: shadow = 0.
+    //    flipNext landing v ∈ (−90°,−180°]: sin ease-in spine shadow.
+    //    v>0 strict → no flash on stage RIGHT at flipNext start.
     const stageLeftShadow = useTransform(masterRotateY, (v) => {
-      if (v > 0 && v <= 180) {
-        // sin arc — peaks at +90°, zero at 0° and +180°
-        return Math.sin((v / 180) * Math.PI) * 0.55;
+      if (v > 0 && v <= 90) {
+        const t = Math.min(v, 45) / 45;
+        return Math.cos(t * (Math.PI / 2)) * 0.65;
       }
       if (v < -90 && v >= -180) {
-        // flipNext landing on left
-        return ((Math.abs(v) - 90) / 90) * 0.4;
+        // Landing: spine shadow builds as flipNext leaf settles on left
+        return Math.sin(((Math.abs(v) - 90) / 90) * (Math.PI / 2)) * 0.45;
       }
       return 0;
     });
@@ -459,11 +527,17 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
         <div className="fb3d-stage" aria-hidden="true">
           <div className="fb3d-stage__left">
             {getPage(stageLine.left)}
-            {phase !== "idle" && <ShadowOverlay shadowValue={stageLeftShadow} direction="left" />}
+            {phase !== "idle" && (
+              // Stage LEFT spine is at the RIGHT edge → shadow gradient dark at right
+              <ShadowOverlay shadowValue={stageLeftShadow} direction="right" maxOpacity={0.75} />
+            )}
           </div>
           <div className="fb3d-stage__right">
             {getPage(stageLine.right)}
-            {phase !== "idle" && <ShadowOverlay shadowValue={stageRightShadow} direction="right" />}
+            {phase !== "idle" && (
+              // Stage RIGHT spine is at the LEFT edge → shadow gradient dark at left
+              <ShadowOverlay shadowValue={stageRightShadow} direction="left" maxOpacity={0.75} />
+            )}
           </div>
         </div>
 
@@ -497,6 +571,7 @@ const FlipBook3D = forwardRef<FlipBook3DHandle, FlipBook3DProps>(
                 flipPhase={phase}
                 frontShadowVal={frontShadow}
                 backShadowVal={backShadow}
+                foldCreaseShadowVal={foldCreaseShadow}
               />
             ))}
           </div>

@@ -39,9 +39,12 @@ interface VariantConfig {
   valueLineHeight: string;
 }
 
+const DESKTOP_W = 120;
+const DESKTOP_H = 164;
+
 const CONFIG: Record<CardCharacterVariant, VariantConfig> = {
   "desktop-default": {
-    width: 152, height: 218,
+    width: DESKTOP_W, height: DESKTOP_H,
     bodyTop: 7, chamfer: 4,
     charSize: 102, charCenterOffsetY: 15.75,
     energyWidth: 72, energyHeight: 40, energyBottom: 3,
@@ -50,7 +53,7 @@ const CONFIG: Record<CardCharacterVariant, VariantConfig> = {
     iconSize: 18, valueFontSize: 14, valueLineHeight: "18px",
   },
   "desktop-hover": {
-    width: 152, height: 218,
+    width: DESKTOP_W, height: DESKTOP_H,
     bodyTop: 7, chamfer: 4,
     charSize: 114, charCenterOffsetY: 19.33,
     energyWidth: 72, energyHeight: 40, energyBottom: 3,
@@ -181,6 +184,7 @@ export interface MainCardCharacterProps {
   /** Path to the character sprite image */
   characterImage: string;
   variant?: CardCharacterVariant;
+  fullSize?: boolean;
   className?: string;
   onClick?: () => void;
 }
@@ -190,6 +194,7 @@ export default function MainCardCharacter({
   energyCost = 7,
   characterImage,
   variant = "desktop-default",
+  fullSize = false,
   className,
   onClick,
 }: MainCardCharacterProps) {
@@ -222,7 +227,12 @@ export default function MainCardCharacter({
         isHovered && "scale-[1.02] -translate-y-1",
         className
       )}
-      style={{ width: c.width, height: c.height }}
+      style={{
+        width: fullSize ? "100%" : c.width,
+        height: fullSize ? "100%" : c.height,
+        minWidth: fullSize ? c.width : undefined,
+        minHeight: fullSize ? c.height : undefined,
+      }}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

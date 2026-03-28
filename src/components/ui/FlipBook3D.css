@@ -89,8 +89,8 @@
 .fb3d-shadow-overlay--left {
   background: linear-gradient(to right,
       rgba(0, 0, 0, 0.85) 0%,
-      rgba(0, 0, 0, 0.20) 35%,
-      rgba(0, 0, 0, 0.05) 55%,
+      rgba(0, 0, 0, 0.5) 35%,
+      rgba(0, 0, 0, 0.2) 55%,
       transparent 100%);
 }
 
@@ -98,8 +98,8 @@
 .fb3d-shadow-overlay--right {
   background: linear-gradient(to left,
       rgba(0, 0, 0, 0.85) 0%,
-      rgba(0, 0, 0, 0.20) 35%,
-      rgba(0, 0, 0, 0.05) 55%,
+      rgba(0, 0, 0, 0.5) 35%,
+      rgba(0, 0, 0, 0.2) 55%,
       transparent 100%);
 }
 
@@ -128,9 +128,9 @@
 .fb3d-fold-crease--left {
   background: linear-gradient(to right,
       rgba(0, 0, 0, 0.00) 0%,
-      rgba(0, 0, 0, 0.10) 6%,
-      rgba(0, 0, 0, 0.30) 10%,
-      rgba(0, 0, 0, 0.10) 15%,
+      rgba(0, 0, 0, 0.05) 6%,
+      rgba(0, 0, 0, 0.10) 10%,
+      rgba(0, 0, 0, 0.05) 15%,
       rgba(0, 0, 0, 0.00) 20%,
       rgba(0, 0, 0, 0.18) 25%,
       rgba(0, 0, 0, 0.04) 42%,
@@ -141,9 +141,9 @@
 .fb3d-fold-crease--right {
   background: linear-gradient(to left,
       rgba(0, 0, 0, 0.00) 0%,
-      rgba(0, 0, 0, 0.10) 6%,
-      rgba(0, 0, 0, 0.30) 10%,
-      rgba(0, 0, 0, 0.10) 15%,
+      rgba(0, 0, 0, 0.05) 6%,
+      rgba(0, 0, 0, 0.10) 10%,
+      rgba(0, 0, 0, 0.05) 15%,
       rgba(0, 0, 0, 0.00) 20%,
       rgba(0, 0, 0, 0.18) 25%,
       rgba(0, 0, 0, 0.04) 42%,
@@ -180,6 +180,27 @@
   /* Trên stage/leaf nhưng dưới UI nút điều hướng */
   z-index: 30;
   background: var(--wiki-page-divider, #171510);
+  overflow: visible; /* Ensure spine-shadow borders are visible */
+}
+
+.fb3d-spine-shadow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px; /* Match pixel-art stroke width */
+  pointer-events: none;
+  background: var(--wiki-ink, #000);
+  will-change: opacity;
+}
+
+/* Shadow border bên PHẢI sống (khi lật trang tiếp theo) */
+.fb3d-spine-shadow--right {
+  left: 100%;
+}
+
+/* Shadow border bên TRÁI sống (khi lật trang trước đó) */
+.fb3d-spine-shadow--left {
+  right: 100%;
 }
 
 
@@ -248,21 +269,13 @@
 /* flipNext: highlight phía sống bên trái, fade dần sang phải */
 .fb3d-specular--left {
   background: linear-gradient(to right,
-      rgba(0, 0, 0, 0.00) 0%,
-      rgba(0, 0, 0, 0.00) 10%,
-      rgba(0, 0, 0, 0.10) 20%,
-      rgba(0, 0, 0, 0.12) 50%,
-      rgba(0, 0, 0, 0.20) 80%,
-      rgba(0, 0, 0, 0.30) 100%);
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.5) 100%);
 }
 
 /* flipPrev: highlight phía sống bên phải, đối xứng với bên trái */
 .fb3d-specular--right {
   background: linear-gradient(to left,
-      rgba(0, 0, 0, 0.00) 0%,
-      rgba(0, 0, 0, 0.00) 10%,
-      rgba(0, 0, 0, 0.10) 20%,
-      rgba(0, 0, 0, 0.12) 50%,
-      rgba(0, 0, 0, 0.20) 80%,
-      rgba(0, 0, 0, 0.30) 100%);
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.5) 100%);
 }

@@ -8,14 +8,19 @@ import { Character } from "@/types/character";
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-page backgrounds (Figma spec)
 // ─────────────────────────────────────────────────────────────────────────────
-const LEFT_PAGE_BG =
-  "linear-gradient(270deg, #171511 0%, #1F1C17 12.69%, #1F1C17 29.8%, #1D1B16 100%)";
+const PAGE_BG_STOPS = "#171511 0%, #1F1C17 10%, #1F1C17 35%, #1D1B16 100%";
 
-const RIGHT_PAGE_BG =
-  "linear-gradient(90deg, #171511 0%, #1F1C17 30.95%, #1F1C17 43.29%, #1D1B16 100%)";
+const LEFT_PAGE_BG = `linear-gradient(270deg, ${PAGE_BG_STOPS})`;
+const RIGHT_PAGE_BG = `linear-gradient(90deg, ${PAGE_BG_STOPS})`;
 
 // Outside stroke (AGENTS.md: box-shadow, not border)
 const PAGE_BORDER_SHADOW = "0 -3px 0 0 #171510, 0 3px 0 0 #171510";
+
+// Grid Padding constants
+const PAGE_PAD_TOP = "56px";
+const PAGE_PAD_BOTTOM = "64px";
+const PAGE_PAD_INNER = "56px"; // Side near the spine (Right of left page, Left of right page)
+const PAGE_PAD_OUTER = "32px"; // Side near the outer edge
 
 interface CharacterPageProps {
   characters: Character[];
@@ -48,11 +53,13 @@ const CharacterPage = forwardRef<HTMLDivElement, CharacterPageProps>(
       <div
         className="absolute inset-0 grid grid-cols-3 grid-rows-3"
         style={{
-          padding: isRight ? "56px 32px 24px 56px" : "56px 56px 24px 32px",
-          rowGap: "24px",
+          padding: isRight
+            ? `${PAGE_PAD_TOP} ${PAGE_PAD_OUTER} ${PAGE_PAD_BOTTOM} ${PAGE_PAD_INNER}`
+            : `${PAGE_PAD_TOP} ${PAGE_PAD_INNER} ${PAGE_PAD_BOTTOM} ${PAGE_PAD_OUTER}`,
+          rowGap: "20px",
           columnGap: "16px",
-          justifyItems: "center",
-          alignItems: "start",
+          justifyItems: "stretch",
+          alignItems: "stretch",
         }}
       >
         {characters.map((char) => (
@@ -61,6 +68,7 @@ const CharacterPage = forwardRef<HTMLDivElement, CharacterPageProps>(
             charName={char.name}
             energyCost={char.energyCons}
             characterImage={urlFor(char.image).url()}
+            fullSize={true}
           />
         ))}
       </div>

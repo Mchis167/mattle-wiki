@@ -27,7 +27,7 @@ export default function SpreadPagination({
     router.push(`?${params.toString()}`);
   };
 
-  const SIDE_OFFSET = -64;
+  const SIDE_OFFSET = -40;
 
   return (
     <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none z-30 flex items-center justify-between">
